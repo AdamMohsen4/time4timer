@@ -18,13 +18,30 @@ extern int nextprime( int );
 int mytime = 0x5957;
 char textstring[] = "text, more text, and even more text!";
 
+
+#define Timer_Base 0x0400020 
+#define Timer_Status  (Timer_Base + 0x00)
+#define Timer_Control (Timer_Base + 0x01)
+#define Timer_PeriodL (Timer_Base + 0x04)
+#define Timer_PeriodH (Timer_Base + 0x06)
+#define Interval 3000000
+
 /* Below is the function that will be called when an interrupt is triggered. */
 void handle_interrupt(unsigned cause) 
 {}
 
+
 /* Add your code here for initializing interrupts. */
-void labinit(void)
-{}
+void labinit(void){
+
+  volatile int *p = Timer_Status;
+  /**
+   * 1. set periodh and periodl
+   * 2. set timer status
+   * 3. start clock (w. contorl) - START, STOP
+   */
+
+}
 
 void set_leds(int led_mask) {
   volatile int *p = (volatile int *) 0x04000000; //pointer to the address of the leds
@@ -101,10 +118,11 @@ int main() {
   int h0 = 9;
   int h1 = 0;
 
+
   // Enter a forever loop
   while (1) {
-    time2string( textstring, mytime ); // Converts mytime to string
-    display_string( textstring ); //Print out the string 'textstring'
+    time2string(textstring, mytime); // Converts mytime to string
+    display_string(textstring); //Print out the string 'textstring'
     if (textstring[0]=='5' && textstring[1]=='9' && textstring[2]==':' && textstring[3]=='5' && textstring[4]=='9' && textstring[5]=='\0') {
       h0 += 1;
       if (h0 == 10) {
@@ -113,8 +131,8 @@ int main() {
       }
     }
 
-    delay( 1000 );          // Delays 1 sec (adjust this value)
-    tick( &mytime );     // Ticks the clock once
+    // delay(1000);       
+    tick(&mytime);     // Ticks the clock once
     if (ledval < 15) {
       ledval += 1;
       set_leds(ledval);
