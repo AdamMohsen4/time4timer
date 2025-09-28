@@ -18,13 +18,14 @@ extern int nextprime( int );
 int mytime = 0x5957;
 char textstring[] = "text, more text, and even more text!";
 
-
-#define Timer_Base 0x0400020 
-#define Timer_Status  (Timer_Base + 0x00)
-#define Timer_Control (Timer_Base + 0x01)
-#define Timer_PeriodL (Timer_Base + 0x04)
-#define Timer_PeriodH (Timer_Base + 0x06)
+int timoutcount = 0;
+#define Timer_Base 0x04000020
+#define Timer_Status  *((volatile unsigned short *) (Timer_Base + 0x00))
+#define Timer_Control *((volatile unsigned short *) (Timer_Base + 0x02))
+#define Timer_PeriodL *((volatile unsigned short *) (Timer_Base + 0x04))
+#define Timer_PeriodH *((volatile unsigned short *) (Timer_Base + 0x06))
 #define Interval 3000000
+
 
 /* Below is the function that will be called when an interrupt is triggered. */
 void handle_interrupt(unsigned cause) 
@@ -33,14 +34,11 @@ void handle_interrupt(unsigned cause)
 
 /* Add your code here for initializing interrupts. */
 void labinit(void){
-
-  volatile int *p = Timer_Status;
-  /**
-   * 1. set periodh and periodl
-   * 2. set timer status
-   * 3. start clock (w. contorl) - START, STOP
-   */
-
+  Timer_PeriodL = (Interval - 1) & 0xFFFF;       // Set the low period of the timer to the interval
+  Timer_PeriodH = (Interval >> 16) & 0xFFFF; 
+  
+  Timer_Status = 0x0; //Reset
+  Timer_Control = (1 << 1) | (1 << 2);  // Set CON and START to true 
 }
 
 void set_leds(int led_mask) {
@@ -121,29 +119,37 @@ int main() {
 
   // Enter a forever loop
   while (1) {
+   
+    print_dec((unsigned int)get_btn());
+
+    if(timeoutcount < 10){
+
+    labinit();     
+    timeoutcount += 1;
+
     time2string(textstring, mytime); // Converts mytime to string
     display_string(textstring); //Print out the string 'textstring'
     if (textstring[0]=='5' && textstring[1]=='9' && textstring[2]==':' && textstring[3]=='5' && textstring[4]=='9' && textstring[5]=='\0') {
       h0 += 1;
       if (h0 == 10) {
         h0 = 0;
-        h1 += 1;
+        h1 += 1;    
       }
     }
 
-    // delay(1000);       
     tick(&mytime);     // Ticks the clock once
     if (ledval < 15) {
       ledval += 1;
       set_leds(ledval);
     }
+
     set_displays(0, textstring[4] - '0');
     set_displays(1, textstring[3] - '0');
     set_displays(2, textstring[1] - '0');
     set_displays(3, textstring[0] - '0');
     set_displays(4, h0);
     set_displays(5, h1);
+  }
     
-    print_dec((unsigned int)get_btn());
   }
 }
