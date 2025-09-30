@@ -18,7 +18,7 @@ extern int nextprime( int );
 int mytime = 0x5957;
 char textstring[] = "text, more text, and even more text!";
 
-int timoutcount = 0;
+int timeoutcount = 0;
 #define Timer_Base 0x04000020
 #define Timer_Status  *((volatile unsigned short *) (Timer_Base + 0x00))
 #define Timer_Control *((volatile unsigned short *) (Timer_Base + 0x02))
@@ -110,7 +110,6 @@ int get_btn (void){
 
 /* Your code goes into main as well as any needed functions. */
 int main() {
-  // Call labinit()
   labinit();
   int ledval = 0;
   int h0 = 9;
@@ -119,14 +118,14 @@ int main() {
 
   // Enter a forever loop
   while (1) {
-   
+
     print_dec((unsigned int)get_btn());
 
-    if(timeoutcount < 10){
-
-    labinit();     
-    timeoutcount += 1;
-
+    if(Timer_Status & 0x1){
+      Timer_Status = 0x0;
+      timeoutcount +=1;
+    
+    if(timeoutcount == 10){
     time2string(textstring, mytime); // Converts mytime to string
     display_string(textstring); //Print out the string 'textstring'
     if (textstring[0]=='5' && textstring[1]=='9' && textstring[2]==':' && textstring[3]=='5' && textstring[4]=='9' && textstring[5]=='\0') {
@@ -149,6 +148,9 @@ int main() {
     set_displays(3, textstring[0] - '0');
     set_displays(4, h0);
     set_displays(5, h1);
+
+    timeoutcount = 0;
+  }
   }
     
   }
